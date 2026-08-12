@@ -60,6 +60,11 @@ npm run dev
 
 Toate fermele, persoanele, sarcinile, observațiile, coordonatele și geometriile din acest proiect sunt sintetice. Nu sunt folosite date reale despre fermieri, date cadastrale, trasee sau puncte GPS reale ori date cu caracter personal. Proiectul nu declară integrări cu registre guvernamentale, o bază de date persistentă de producție sau pregătire pentru utilizare în producție.
 
+## Evidence
+
+- [Arhitectură bazată pe dovezi](docs/architecture.md)
+- [Matrice de dovezi și comenzi de verificare](docs/evidence-matrix.md)
+
 ## Proiecte asociate
 
 - [Farm Registry Mobile](https://github.com/luciandanileico94-dev/farm-registry-mobile)
