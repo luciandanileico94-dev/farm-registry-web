@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 import App, { type Parcel } from '../App';
 
 const mockLoadParcels = vi.hoisted(() => vi.fn());
-vi.mock('../api', () => ({ loadParcels: mockLoadParcels }));
+vi.mock('../api', () => ({ loadParcels: mockLoadParcels, DATA_MODE: 'api' }));
 
 const fixtures: Parcel[] = [{ id: 'DEMO-PARCEL-001', farmer: 'Example Farm SRL', area: 42.8, status: 'Valid', crop: 'Grâu', center: [47.02, 28.84] }];
 function renderApp() { return render(<QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}><App /></QueryClientProvider>); }
@@ -17,6 +17,11 @@ describe('registry dashboard', () => {
     fireEvent.change(screen.getByLabelText('Caută parcele'), { target: { value: 'missing' } });
     expect(screen.getByText(/Nu există rezultate/)).toBeInTheDocument();
     expect(screen.queryByText('Example Farm SRL')).not.toBeInTheDocument();
+  });
+
+  it('labels the normal data source explicitly', () => {
+    renderApp();
+    expect(screen.getByText('API GET /parcels')).toBeInTheDocument();
   });
 
   it('does not hide a REST failure and offers a retry', async () => {
