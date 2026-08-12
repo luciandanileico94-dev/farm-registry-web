@@ -1,39 +1,31 @@
 # Farm Registry Web
 
-Portfolio-demo для закупки MAIA **Servicii Front End & Python Developer (junior)**. Это самостоятельная демонстрация интерфейса, не официальный продукт MAIA и не копия закрытой системы.
+Client web React + TypeScript pentru un workspace operațional de registru agricol. Interfața este în primul rând în limba română și folosește exclusiv date sintetice în modul implicit. Nu este un produs oficial, nu reproduce o bază de date reală și nu se conectează la sisteme guvernamentale, cadastrale sau la endpoint-uri de producție.
 
-## Что демонстрирует
+## Ce include
 
-- React + TypeScript + responsive UI на румынском языке;
-- Leaflet-карта, которая рисует `geometry` из API как GeoJSON Polygon;
-- поиск, выбор записи и видимое условие валидации;
-- явный static demo mode с тем же GeoJSON-контрактом;
-- тесты и production build.
+- dashboard responsive pentru 6 ferme fictive și 12 câmpuri GeoJSON Polygon;
+- KPI pentru ferme, câmpuri, validări în așteptare și sarcini deschise;
+- căutare plus filtre după fermă, cultură și status;
+- hartă Leaflet, selecție de câmp și fișă cu tab-uri pentru privire generală, ciclu de cultură, sarcini, observații și istoric audit;
+- acțiuni locale funcționale: creare și finalizare sarcină, adăugare și aprobare/revizie observație, export GeoJSON și resetare demo;
+- delimitare vizibilă `Date sintetice · scenariu local`. Starea demo este deterministă și se păstrează în `localStorage`.
 
-## Соответствие критериям закупки
+Toate identificatoarele din fixtures au prefix `SYN-`; numele, fermierii, task-urile, observațiile și coordonatele sunt fictive.
 
-| Требование | Доказательство |
-|---|---|
-| React / TypeScript | `src/App.tsx`, `src/main.tsx` |
-| GIS / GeoJSON / Leaflet | `MapContainer`, `GeoJSON` в `src/App.tsx` |
-| REST API integration | `src/api.ts` → `GET /parcels`; ошибка API не подменяется демо |
-| State management | `useQuery({queryKey:['parcels']})` в `src/App.tsx` |
-| Tests / CI | `src/test/App.test.tsx`, `.github/workflows/ci.yml` |
-| Git workflow | feature branches, pull requests и review-ready commits |
+## Moduri de date și client API
 
-## Режимы и локальное подключение API
-
-По умолчанию приложение работает в статическом demo mode: это синтетические записи `SYN-DEMO-*`, сохранённые в `src/App.tsx`. Для подключения локального Python API запусти его на `http://127.0.0.1:8000`, затем запусти веб-клиент так:
+În mod implicit, aplicația folosește fixture statică locală. Pentru modul API:
 
 ```bash
 VITE_FARM_REGISTRY_MODE=api VITE_API_URL=http://127.0.0.1:8000 npm run dev
 ```
 
-Клиент делает только `GET /parcels`. Каждая запись API должна иметь поля `id`, `farmer`, `area`, `status`, `crop`, `center` и `geometry`, где `geometry.type` — `Polygon`, координаты — вложенные пары `[longitude, latitude]`, а `center` — `[latitude, longitude]`. При ошибке API интерфейс показывает ошибку и пустой registry; synthetic demo data не подставляются.
+`src/api.ts` este granița clientului pentru resursele `farms`, `fields`, `tasks` și `observations`. Pentru compatibilitate cu Python API-ul existent, câmpurile sunt citite prin `GET /parcels`; funcția `loadFields()` păstrează aceeași cale. Răspunsul de parcelă acceptă contractul existent (`id`, `farmer`, `area`, `status`, `crop`, `center`, `geometry`), iar câmpurile operaționale suplimentare sunt opționale.
 
-Static Vercel hosting не запускает Python API и не предоставляет `http://127.0.0.1:8000` посетителю. Поэтому задеплоенная статическая версия остаётся demo mode, если рядом отдельно не разместить API с разрешённым CORS и задать `VITE_FARM_REGISTRY_MODE=api` и `VITE_API_URL` до сборки.
+În modul API, eroarea, încărcarea și răspunsul gol sunt afișate explicit. Clientul nu înlocuiește niciodată un răspuns API eșuat cu fixture demo. Acțiunile create în UI sunt locale până când un backend va expune mutații; interfața nu pretinde că le-a sincronizat.
 
-## Запуск
+## Rulare locală
 
 ```bash
 npm install
@@ -42,6 +34,11 @@ npm test
 npm run build
 ```
 
-Связанные проекты: [Python geospatial tools](https://github.com/luciandanileico94-dev/farm-registry-python-tools) · [React Native field app](https://github.com/luciandanileico94-dev/farm-registry-mobile).
+`npm run build` creează un client static. Hosting-ul static Vercel poate servi interfața și demo-ul, dar nu rulează Python API și nu poate face acces automat la `127.0.0.1` al vizitatorului. Pentru modul API este necesar un API separat, accesibil prin CORS permis, iar `VITE_FARM_REGISTRY_MODE` și `VITE_API_URL` trebuie setate înainte de build. Nu este configurat niciun URL de producție în acest repository.
 
-> Все показанные данные синтетические. Приложение не подключается к MAIA, MPass, MConnect, государственным или кадастровым системам и не содержит credentials.
+## Proiecte asociate
+
+- [Farm Registry Python API / geospatial tools](https://github.com/luciandanileico94-dev/farm-registry-python-tools) — API-ul Python compatibil cu `/parcels`.
+- [Farm Registry Mobile](https://github.com/luciandanileico94-dev/farm-registry-mobile) — aplicația separată pentru colectarea observațiilor pe teren.
+
+Aceste linkuri descriu proiectele asociate; acest client web nu publică credentials, date personale reale, GPS real sau identificatori cadastrali.
