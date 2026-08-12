@@ -1,13 +1,15 @@
-# Farm Registry Web
+# Farm Registry Web — registru operațional pentru ferme și parcele
 
 ## Ce este
 
-Un workspace web **Romanian-first** pentru explorarea unui registru agricol sintetic. Aplicația reunește ferme, câmpuri, verificări și activități într-o interfață React; este un demo tehnic, nu un registru oficial și nu este prezentat ca produs production-ready.
+Un workspace web **Romanian-first** pentru coordonarea fermelor, parcelelor și verificărilor într-un singur spațiu operațional. Aplicația reunește lista de lucru, filtrele, harta, fișa parcelei, sarcinile, observațiile și istoricul audit într-o interfață React.
 
 ## Demo live
 
 - [Deschide aplicația web](https://farm-registry-web.vercel.app)
 - [API demo](https://farm-registry-api-demo.onrender.com) · [documentație API](https://farm-registry-api-demo.onrender.com/docs)
+
+![Previzualizare workspace Farm Registry](docs/screenshots/workspace-map.png)
 
 Deployment-ul Web este configurat în API mode cu `VITE_FARM_REGISTRY_MODE=api` și `VITE_API_URL=https://farm-registry-api-demo.onrender.com`. Calea de citire este conectată la API-ul găzduit pe Render; backend-ul este exclusiv sintetic și limitat la scopul demonstrației.
 
@@ -19,6 +21,10 @@ Deployment-ul Web este configurat în API mode cu `VITE_FARM_REGISTRY_MODE=api` 
 - fișă de câmp cu privire generală, ciclu de cultură, sarcini, observații și istoric audit;
 - creare/finalizare de sarcini și adăugare/aprobare/revizie de observații în starea locală a demo-ului;
 - export GeoJSON pentru câmpul selectat și resetarea datelor demo locale.
+
+## Flux operațional
+
+Operatorul filtrează lista de lucru după fermă, cultură sau status, selectează un câmp pe hartă, verifică geometria și lucrează cu sarcini și observații în fișa contextuală. În API mode, lista de câmpuri este citită prin `GET /parcels`; acțiunile de lucru rămân locale în client.
 
 Scenariul local inclus conține 6 ferme și 12 câmpuri fictive și persistă modificările demo în `localStorage`.
 
