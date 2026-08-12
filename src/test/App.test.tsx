@@ -6,17 +6,17 @@ import App, { type Parcel } from '../App';
 const mockLoadParcels = vi.hoisted(() => vi.fn());
 vi.mock('../api', () => ({ loadParcels: mockLoadParcels }));
 
-const fixtures: Parcel[] = [{ id: 'MD-CT-00142', farmer: 'AgroNord SRL', area: 42.8, status: 'Valid', crop: 'Grâu', center: [47.02, 28.84] }];
+const fixtures: Parcel[] = [{ id: 'DEMO-PARCEL-001', farmer: 'Example Farm SRL', area: 42.8, status: 'Valid', crop: 'Grâu', center: [47.02, 28.84] }];
 function renderApp() { return render(<QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}><App /></QueryClientProvider>); }
 
 describe('registry dashboard', () => {
   it('shows API data and filters the visible list', async () => {
     mockLoadParcels.mockResolvedValueOnce(fixtures);
     renderApp();
-    expect(await screen.findByText('AgroNord SRL')).toBeInTheDocument();
+    expect(await screen.findByText('Example Farm SRL')).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText('Caută parcele'), { target: { value: 'missing' } });
     expect(screen.getByText(/Nu există rezultate/)).toBeInTheDocument();
-    expect(screen.queryByText('AgroNord SRL')).not.toBeInTheDocument();
+    expect(screen.queryByText('Example Farm SRL')).not.toBeInTheDocument();
   });
 
   it('does not hide a REST failure and offers a retry', async () => {

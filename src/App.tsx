@@ -17,7 +17,7 @@ export type Parcel = {
 function parcelGeoJson(parcels: Parcel[]) {
   return {
     type: 'FeatureCollection',
-    features: parcels.map((parcel, index) => ({
+    features: parcels.map((parcel) => ({
       type: 'Feature',
       properties: { id: parcel.id },
       geometry: {
@@ -25,7 +25,7 @@ function parcelGeoJson(parcels: Parcel[]) {
         coordinates: [[
           [parcel.center[1] - 0.02, parcel.center[0] - 0.02],
           [parcel.center[1] + 0.02, parcel.center[0] - 0.02],
-          [parcel.center[1] + 0.02, parcel.center[0] + 0.02 + index * 0],
+          [parcel.center[1] + 0.02, parcel.center[0] + 0.02],
           [parcel.center[1] - 0.02, parcel.center[0] + 0.02],
           [parcel.center[1] - 0.02, parcel.center[0] - 0.02],
         ]],
