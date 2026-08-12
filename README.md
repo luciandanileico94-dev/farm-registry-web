@@ -1,34 +1,32 @@
 # Farm Registry Web
 
-## Ce este
+## Workspace pentru verificări operaționale agricole
 
-Un workspace web **Romanian-first** pentru explorarea unui registru agricol sintetic. Aplicația reunește ferme, câmpuri, verificări și activități într-o interfață React; este un demo tehnic, nu un registru oficial și nu este prezentat ca produs production-ready.
+Farm Registry Web este un workspace **Romanian-first** pentru operatorii care inspectează ferme și câmpuri și urmăresc verificări operaționale. Oferă o vedere unitară asupra parcelelor, culturilor, sarcinilor, observațiilor și istoricului de audit, pentru ca un operator să poată găsi rapid un câmp și să documenteze activitatea de lucru din interfață.
 
-## Demo live
+Aplicația prezintă un flux de produs funcțional pe date publice sintetice; nu este un registru oficial și nu este pregătită pentru producție. Vezi [aplicația live](https://farm-registry-web.vercel.app) și [documentația API](https://farm-registry-api-demo.onrender.com/docs).
 
-- [Deschide aplicația web](https://farm-registry-web.vercel.app)
-- [API demo](https://farm-registry-api-demo.onrender.com) · [documentație API](https://farm-registry-api-demo.onrender.com/docs)
+## Roluri și fluxuri disponibile
 
-Deployment-ul Web este configurat în API mode cu `VITE_FARM_REGISTRY_MODE=api` și `VITE_API_URL=https://farm-registry-api-demo.onrender.com`. Calea de citire este conectată la API-ul găzduit pe Render; backend-ul este exclusiv sintetic și limitat la scopul demonstrației.
+Interfața acoperă activitatea unui operator de teren sau de control care consultă și actualizează local starea de lucru a unui câmp selectat:
 
-## Capabilități
+- pornește din dashboard pentru a vedea indicatorii de ferme, câmpuri, validări și sarcini deschise;
+- caută și filtrează ferme/câmpuri după fermă, cultură și status;
+- selectează un câmp din listă sau de pe hartă;
+- consultă taburile câmpului selectat: privire generală, ciclu de cultură, sarcini, observații și audit;
+- creează sau marchează sarcini ca finalizate în starea locală;
+- adaugă observații și le aprobă sau le revizuiește în starea locală;
+- verifică istoricul de audit, exportă câmpul selectat ca GeoJSON sau resetează datele demo locale.
 
-- dashboard responsive și KPI pentru ferme, câmpuri, validări și sarcini deschise;
-- căutare și filtre după fermă, cultură și status;
-- hartă Leaflet cu geometrii GeoJSON Polygon și selecția câmpului;
-- fișă de câmp cu privire generală, ciclu de cultură, sarcini, observații și istoric audit;
-- creare/finalizare de sarcini și adăugare/aprobare/revizie de observații în starea locală a demo-ului;
-- export GeoJSON pentru câmpul selectat și resetarea datelor demo locale.
-
-Scenariul local inclus conține 6 ferme și 12 câmpuri fictive și persistă modificările demo în `localStorage`.
+Harta folosește geometrii GeoJSON Polygon pentru selectarea câmpurilor. Scenariul local include 6 ferme și 12 câmpuri fictive.
 
 ## Stack
 
 - React, TypeScript și Vite;
-- TanStack Query și Axios pentru calea de citire API;
-- Leaflet și React Leaflet pentru hartă;
-- GeoJSON pentru geometriile și exportul câmpurilor;
-- Vitest și Testing Library pentru teste.
+- TanStack React Query și Axios;
+- Leaflet și React Leaflet;
+- GeoJSON;
+- Vitest și Testing Library.
 
 ## Rulare locală
 
@@ -37,16 +35,18 @@ npm install
 npm run dev
 ```
 
-Modul implicit este demo și folosește fixtures sintetice locale. Verificările proiectului pot fi rulate cu:
+Scripturile disponibile în proiect sunt:
 
 ```bash
-npm test
+npm run dev
 npm run build
+npm test
+npm run lint
 ```
 
-## Mod API și variabile de mediu
+## Mod API
 
-Pentru a porni clientul local folosind API-ul demo:
+În mod implicit, aplicația folosește fixtures sintetice locale. Pentru calea de citire conectată la API, pornește aplicația astfel:
 
 ```bash
 VITE_FARM_REGISTRY_MODE=api \
@@ -54,15 +54,20 @@ VITE_API_URL=https://farm-registry-api-demo.onrender.com \
 npm run dev
 ```
 
-În API mode, clientul încarcă lista de câmpuri prin `GET /parcels` și afișează explicit stările de încărcare, eroare și răspuns gol, fără fallback automat la fixtures. Fluxurile de mutation din interfață rămân locale și nu trebuie interpretate drept sincronizare completă sau persistență production-grade.
+Variabilele de mediu sunt `VITE_FARM_REGISTRY_MODE=api` și `VITE_API_URL`. În acest mod, clientul citește parcelele prin `GET /parcels` de la API-ul găzduit pe Render și afișează stări de încărcare, eroare și răspuns gol, fără fallback automat la fixtures.
 
-## Limita datelor sintetice
+Sarcinile și observațiile rămân mutații locale: nu există mutații backend, persistență pe server sau sincronizare între clienți.
 
-Toate fermele, persoanele, sarcinile, observațiile, coordonatele și geometriile din acest proiect sunt sintetice. Nu sunt folosite date reale despre fermieri, date cadastrale, trasee sau puncte GPS reale ori date cu caracter personal. Proiectul nu declară integrări cu registre guvernamentale, o bază de date persistentă de producție sau pregătire pentru utilizare în producție.
+## Date și limite
 
-## Evidence
+Toate datele publice din aplicație sunt **doar sintetice**. Proiectul nu conține și nu trebuie folosit cu date private sau reale despre persoane, ferme, GPS, trasee, cadastru, credențiale ori secrete.
 
-Vezi [arhitectura bazată pe dovezi](docs/architecture.md) și [matricea de dovezi](docs/evidence-matrix.md).
+Modificările locale pot fi păstrate în `localStorage` doar în browserul curent și pot fi resetate din interfață. Calea API este limitată la citirea `GET /parcels`; ea nu transformă aplicația într-un sistem conectat complet. Nu există afirmații de autentificare, autorizare, persistență de producție, integrare cu registre oficiale sau pregătire pentru producție.
+
+## Evidențe
+
+- [Arhitectură bazată pe dovezi](docs/architecture.md)
+- [Matrice de dovezi](docs/evidence-matrix.md)
 
 ## Proiecte asociate
 
