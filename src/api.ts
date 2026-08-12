@@ -1,15 +1,13 @@
 import axios from 'axios';
 import type { Parcel } from './App';
 
-const client = axios.create({ baseURL: import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8000', timeout: 1200 });
+const client = axios.create({
+  baseURL: import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8000',
+  timeout: 1800,
+});
 
-/** Typed REST boundary. The demo falls back to local fixtures when the API is not running. */
+/** The API boundary deliberately propagates failures: API mode must never become demo mode silently. */
 export async function loadParcels(): Promise<Parcel[]> {
-  if (import.meta.env.MODE === 'test') return [];
-  try {
-    const response = await client.get<Parcel[]>('/parcels');
-    return response.data;
-  } catch {
-    return [];
-  }
+  const response = await client.get<Parcel[]>('/parcels');
+  return response.data;
 }
