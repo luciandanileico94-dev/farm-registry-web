@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { GeoJSON, MapContainer } from 'react-leaflet';
+import { GeoJSON, MapContainer, TileLayer, useMap } from 'react-leaflet';
 import type { Feature, FeatureCollection, Geometry } from 'geojson';
 import { loadParcels } from './api';
 import { cloneDemoWorkspace, demoWorkspace } from './fixtures';
@@ -58,12 +58,56 @@ export function geoJsonLayerKey(items: Parcel[]): string {
   return items.map(parcel => `${parcel.id}:${JSON.stringify(parcel.geometry)}`).join('|');
 }
 
-function MapView({ fields, selectedId, onSelect }: { fields: Parcel[]; selectedId?: string; onSelect: (id: string) => void }) {
+export function parcelBounds(fields: Pick<Parcel, 'geometry'>[]): [[number, number], [number, number]] | undefined {
+  let minLatitude = Infinity;
+  let minLongitude = Infinity;
+  let maxLatitude = -Infinity;
+  let maxLongitude = -Infinity;
+
+  for (const field of fields) {
+    for (const ring of field.geometry.coordinates) {
+      for (const [longitude, latitude] of ring) {
+        if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) continue;
+        minLatitude = Math.min(minLatitude, latitude);
+        minLongitude = Math.min(minLongitude, longitude);
+        maxLatitude = Math.max(maxLatitude, latitude);
+        maxLongitude = Math.max(maxLongitude, longitude);
+      }
+    }
+  }
+
+  if (![minLatitude, minLongitude, maxLatitude, maxLongitude].every(Number.isFinite)) return undefined;
+  return [[minLatitude, minLongitude], [maxLatitude, maxLongitude]];
+}
+
+function MapViewport({ fields, focusedId }: { fields: Parcel[]; focusedId?: string }) {
+  const map = useMap();
+
+  useEffect(() => {
+    const bounds = parcelBounds(fields);
+    if (bounds) map.fitBounds(bounds, { padding: [24, 24], maxZoom: 16, animate: false });
+  }, [fields, map]);
+
+  useEffect(() => {
+    const focused = fields.find(field => field.id === focusedId);
+    const bounds = focused ? parcelBounds([focused]) : undefined;
+    if (bounds) map.fitBounds(bounds, { padding: [40, 40], maxZoom: 17 });
+  }, [fields, focusedId, map]);
+
+  return null;
+}
+
+function MapView({ fields, selectedId, focusedId, onSelect }: { fields: Parcel[]; selectedId?: string; focusedId?: string; onSelect: (id: string) => void }) {
   if (import.meta.env.MODE === 'test') {
     return <div className="map test-map" aria-label="Parcel geometry map"><span>Leaflet geometry preview</span><small>{fields.map(field => `${field.id}: ${field.geometry.coordinates[0].length - 1} points`).join(' · ')}</small></div>;
   }
 
-  return <MapContainer center={[47.02, 28.86]} zoom={7} scrollWheelZoom={false} className="map" aria-label="Parcel geometry map">
+  return <MapContainer center={[0, 0]} zoom={2} scrollWheelZoom={false} className="map" aria-label="Parcel geometry map">
+    <TileLayer
+      attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+    />
+    <MapViewport fields={fields} focusedId={focusedId} />
     <GeoJSON key={geoJsonLayerKey(fields)} data={toFeatureCollection(fields)} style={feature => ({
       color: feature?.properties?.id === selectedId ? '#d66b39' : feature?.properties?.status === 'Review' ? '#d18b25' : feature?.properties?.status === 'Blocked' ? '#b44d40' : '#168a76',
       weight: feature?.properties?.id === selectedId ? 3 : 2,
@@ -92,6 +136,7 @@ function exportField(parcel: Parcel) {
 export default function App({ mode = dataMode() }: { mode?: DataMode }) {
   const [localWorkspace, setLocalWorkspace] = useState<WorkspaceData>(() => mode === 'demo' ? readDemoWorkspace() : blankApiWorkspace());
   const [selectedId, setSelectedId] = useState<string>();
+  const [focusedMapId, setFocusedMapId] = useState<string>();
   const [query, setQuery] = useState('');
   const [farmFilter, setFarmFilter] = useState('all');
   const [cropFilter, setCropFilter] = useState('all');
@@ -139,7 +184,8 @@ export default function App({ mode = dataMode() }: { mode?: DataMode }) {
   const openTaskCount = tasks.filter(task => task.status !== 'Completed').length;
   const pendingValidation = fields.filter(field => field.status !== 'Valid').length;
 
-  const selectField = (id: string) => { setSelectedId(id); setActiveTab('overview'); };
+  const selectField = (id: string) => { setSelectedId(id); setFocusedMapId(id); setActiveTab('overview'); };
+  const updateFilter = (update: () => void) => { update(); setFocusedMapId(undefined); };
   const notify = (message: string) => setToast(message);
 
   const createTask = () => {
@@ -181,6 +227,7 @@ export default function App({ mode = dataMode() }: { mode?: DataMode }) {
       try { window.localStorage.removeItem(LOCAL_KEY); } catch { /* localStorage is optional */ }
     } else setLocalWorkspace(blankApiWorkspace());
     setSelectedId(undefined);
+    setFocusedMapId(undefined);
     setFarmFilter('all'); setCropFilter('all'); setStatusFilter('all'); setQuery('');
     notify('Datele locale au fost resetate la scenariul inițial.');
   };
@@ -193,11 +240,11 @@ export default function App({ mode = dataMode() }: { mode?: DataMode }) {
     <main>
       <aside>
         <div className="eyebrow">OPERARE TEREN</div><h1>Registru agricol</h1><p className="muted">Fermieri, câmpuri și verificări într-un singur spațiu de lucru.</p>
-        <label className="search"><span aria-hidden="true">⌕</span><input aria-label="Search parcels" placeholder="Caută fermă, câmp sau ID…" value={query} onChange={event => setQuery(event.target.value)} /></label>
+        <label className="search"><span aria-hidden="true">⌕</span><input aria-label="Search parcels" placeholder="Caută fermă, câmp sau ID…" value={query} onChange={event => updateFilter(() => setQuery(event.target.value))} /></label>
         <div className="filters" aria-label="Filtre registru">
-          <select aria-label="Filtru fermă" value={farmFilter} onChange={event => setFarmFilter(event.target.value)}><option value="all">Toate fermele</option>{farms.map(farm => <option key={farm.id} value={farm.id}>{farm.name}</option>)}</select>
-          <select aria-label="Filtru cultură" value={cropFilter} onChange={event => setCropFilter(event.target.value)}><option value="all">Toate culturile</option>{cropOptions.map(crop => <option key={crop}>{crop}</option>)}</select>
-          <select aria-label="Filtru status" value={statusFilter} onChange={event => setStatusFilter(event.target.value)}><option value="all">Toate statusurile</option><option value="Valid">Validat</option><option value="Review">În verificare</option><option value="Blocked">Blocat</option></select>
+          <select aria-label="Filtru fermă" value={farmFilter} onChange={event => updateFilter(() => setFarmFilter(event.target.value))}><option value="all">Toate fermele</option>{farms.map(farm => <option key={farm.id} value={farm.id}>{farm.name}</option>)}</select>
+          <select aria-label="Filtru cultură" value={cropFilter} onChange={event => updateFilter(() => setCropFilter(event.target.value))}><option value="all">Toate culturile</option>{cropOptions.map(crop => <option key={crop}>{crop}</option>)}</select>
+          <select aria-label="Filtru status" value={statusFilter} onChange={event => updateFilter(() => setStatusFilter(event.target.value))}><option value="all">Toate statusurile</option><option value="Valid">Validat</option><option value="Review">În verificare</option><option value="Blocked">Blocat</option></select>
         </div>
         {isError && <div className="error" role="alert"><strong>Conexiunea API a eșuat.</strong><span>Nu sunt afișate date demo în modul API.</span></div>}
         <div className="list" aria-label="Parcel registry">
@@ -211,7 +258,7 @@ export default function App({ mode = dataMode() }: { mode?: DataMode }) {
         <div className="topline"><div><span className="crumb">Registru / Câmpuri / </span><b>{selected?.id ?? '—'}</b></div><button type="button" className="export" onClick={() => selected && exportField(selected)}>⇩ Exportă GeoJSON</button></div>
         <div className="stats"><article><span>Ferme urmărite</span><strong>{farms.length}</strong><em>{mode === 'api' ? 'deduse din răspuns' : 'date sintetice'}</em></article><article><span>Câmpuri în registru</span><strong>{fields.length}</strong><em>{fields.reduce((sum, field) => sum + field.area, 0).toFixed(1)} ha</em></article><article><span>Necesită verificare</span><strong>{pendingValidation}</strong><em className="warn">{openTaskCount} sarcini deschise</em></article></div>
         <div className="kpi-strip"><span><b>{openTaskCount}</b> sarcini deschise</span><span><b>{selectedObservations.filter(observation => observation.status === 'Pending').length}</b> observații în așteptare</span><span><b>{fields.filter(field => field.status === 'Valid').length}</b> câmpuri validate</span></div>
-        <div className="map-card"><div className="map-toolbar"><div><b>Hartă de lucru</b><span className="badge">GeoJSON Polygon</span></div><span className="map-note">selectează un contur pentru a deschide fișa</span></div><MapView fields={filteredFields} selectedId={selected?.id} onSelect={selectField} /><div className="map-legend"><span><i className="legend valid" /> Validat</span><span><i className="legend review" /> În verificare</span><span><i className="legend blocked" /> Blocat</span><span><i className="legend selected" /> Selectat</span></div></div>
+        <div className="map-card"><div className="map-toolbar"><div><b>Hartă de lucru</b><span className="badge">GeoJSON Polygon</span></div><span className="map-note">selectează un contur pentru a deschide fișa</span></div><MapView fields={filteredFields} selectedId={selected?.id} focusedId={focusedMapId} onSelect={selectField} /><div className="map-legend"><span><i className="legend valid" /> Validat</span><span><i className="legend review" /> În verificare</span><span><i className="legend blocked" /> Blocat</span><span><i className="legend selected" /> Selectat</span></div></div>
         {mode === 'api' && isSuccess && !fields.length && <div className="empty-state">Răspunsul API nu conține câmpuri. Nu au fost încărcate date demo.</div>}
         {selected ? <div className="detail-card"><div className="detail-head"><div><span className={'status-pill ' + selected.status.toLowerCase()}>● {statusLabel(selected.status)}</span><h2>{selected.farmer}</h2><p>{selected.fieldName ?? 'Câmp agricol'} · {selected.id} · {selected.area} ha</p></div><div className="detail-actions"><button type="button" className="outline" onClick={createTask}>＋ Sarcină</button><button type="button" className="outline" onClick={() => setActiveTab('observations')}>＋ Observație</button></div></div>
           <div className="tabs" role="tablist" aria-label="Secțiuni fișă câmp">{([['overview', 'Privire generală'], ['cycle', 'Ciclu cultură'], ['tasks', `Sarcini (${selectedTasks.length})`], ['observations', `Observații (${selectedObservations.length})`], ['audit', 'Istoric audit']] as const).map(([id, label]) => <button type="button" role="tab" aria-selected={activeTab === id} className={activeTab === id ? 'active' : ''} key={id} onClick={() => setActiveTab(id)}>{label}</button>)}</div>
