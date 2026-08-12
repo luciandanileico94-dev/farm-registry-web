@@ -32,12 +32,16 @@ function toFeatureCollection(items: Parcel[]): FeatureCollection<Geometry> {
   return { type: 'FeatureCollection', features: items.map((parcel): Feature<Geometry> => ({ type: 'Feature', properties: { id: parcel.id, status: parcel.status }, geometry: parcel.geometry })) };
 }
 
+export function geoJsonLayerKey(items: Parcel[]): string {
+  return items.map(parcel => `${parcel.id}:${JSON.stringify(parcel.geometry)}`).join('|');
+}
+
 function MapView({ parcels, selectedId, onSelect }: { parcels: Parcel[]; selectedId?: string; onSelect: (id: string) => void }) {
   if (import.meta.env.MODE === 'test') {
     return <div className="map test-map" aria-label="Parcel geometry map"><span>Leaflet geometry preview</span><small>{parcels.map(parcel => `${parcel.id}: ${parcel.geometry.coordinates[0].length - 1} points`).join(' · ')}</small></div>;
   }
   return <MapContainer center={[47.02, 28.86]} zoom={11} scrollWheelZoom={false} className="map" aria-label="Parcel geometry map">
-    <GeoJSON data={toFeatureCollection(parcels)} style={feature => ({ color: feature?.properties?.id === selectedId ? '#d66b39' : feature?.properties?.status === 'Review' ? '#d18b25' : '#168a76', weight: feature?.properties?.id === selectedId ? 3 : 2, fillOpacity: feature?.properties?.id === selectedId ? 0.2 : 0.1 })} eventHandlers={{ click: event => { const id = event.propagatedFrom?.feature?.properties?.id; if (id) onSelect(id); } }} />
+    <GeoJSON key={geoJsonLayerKey(parcels)} data={toFeatureCollection(parcels)} style={feature => ({ color: feature?.properties?.id === selectedId ? '#d66b39' : feature?.properties?.status === 'Review' ? '#d18b25' : '#168a76', weight: feature?.properties?.id === selectedId ? 3 : 2, fillOpacity: feature?.properties?.id === selectedId ? 0.2 : 0.1 })} eventHandlers={{ click: event => { const id = event.propagatedFrom?.feature?.properties?.id; if (id) onSelect(id); } }} />
     <MapClick />
   </MapContainer>;
 }
