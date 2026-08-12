@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import App, { demoParcels, fieldToGeoJSON, geoJsonLayerKey, toFeatureCollection } from '../App';
+import App, { demoParcels, fieldToGeoJSON, geoJsonLayerKey, parcelBounds, toFeatureCollection } from '../App';
 import { loadParcels } from '../api';
 
 vi.mock('../api', () => ({ loadParcels: vi.fn() }));
@@ -26,6 +26,16 @@ describe('registry dashboard', () => {
     expect(geoJsonLayerKey([])).not.toBe(geoJsonLayerKey(demoParcels));
     expect(toFeatureCollection(demoParcels).features).toHaveLength(12);
     expect(fieldToGeoJSON(demoParcels[0]).geometry).toEqual(demoParcels[0].geometry);
+  });
+
+  it('computes valid map bounds for empty, single and multiple polygon lists', () => {
+    expect(parcelBounds([])).toBeUndefined();
+    expect(parcelBounds([{ geometry: { type: 'Polygon', coordinates: [[[Number.NaN, Number.NaN]]] } }])).toBeUndefined();
+    expect(parcelBounds([{ geometry: { type: 'Polygon', coordinates: [[[28, 47], [29, 48], [28, 47]]] } }])).toEqual([[47, 28], [48, 29]]);
+    expect(parcelBounds([
+      { geometry: { type: 'Polygon', coordinates: [[[28, 47], [29, 48], [28, 47]]] } },
+      { geometry: { type: 'Polygon', coordinates: [[[27, 46], [30, 49], [27, 46]]] } },
+    ])).toEqual([[46, 27], [49, 30]]);
   });
 
   it('renders explicit static demo data and its real geometry contract', async () => {
