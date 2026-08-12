@@ -1,35 +1,34 @@
-# Farm Registry Web
+# Registrul Fermierului — demonstrație web
 
-Portfolio-demo для закупки MAIA **Servicii Front End & Python Developer (junior)**. Это самостоятельная демонстрация интерфейса, не официальный продукт MAIA и не копия закрытой системы.
+Demonstrație publică, autonomă, pentru un portofoliu de tender. Nu este produs oficial MAIA, nu este copie a unui sistem închis și nu pretinde experiență, utilizatori, clienți sau integrări guvernamentale. Toate datele afișate trebuie tratate ca sintetice.
 
-## Что демонстрирует
+## Ce face
 
-- React + TypeScript + responsive UI на румынском языке;
-- интерактивная карта на Leaflet с GeoJSON-полигонами и выбором parcel;
-- state management через реальный `useQuery`/React Query и локальный UI state;
-- поиск, статусы валидации и доступный keyboard-friendly UI;
-- тест, CI и production build.
+- interfață React + TypeScript, în primul rând în română, responsive și cu controale accesibile;
+- încarcă parcele exclusiv prin REST `GET /parcels`;
+- afișează stări distincte pentru încărcare, eroare, răspuns gol și filtrare fără rezultate;
+- vizualizează poligoane GeoJSON pe Leaflet și permite selectarea unei parcele;
+- calculează sumarul din răspunsul API, fără statistici precompletate.
 
-## Соответствие критериям закупки
+## Arhitectură
 
-| Требование | Доказательство |
-|---|---|
-| React / TypeScript | `src/App.tsx`, `src/main.tsx` |
-| GIS / GeoJSON / Leaflet | `MapContainer`, `GeoJSON` в `src/App.tsx` |
-| REST API integration | `src/api.ts` → `GET /parcels`, fallback на synthetic fixtures |
-| State management | `useQuery({queryKey:['parcels']})` в `src/App.tsx` |
-| Tests / CI | `src/test/App.test.tsx`, `.github/workflows/ci.yml` |
-| Git workflow | feature branches, pull requests и review-ready commits |
+`src/api.ts` este granița REST și propagă erorile către React Query. `src/App.tsx` gestionează starea de încărcare, selecția și filtrarea, iar `src/styles.css` definește layout-ul responsive. Testele din `src/test/App.test.tsx` verifică datele API, eroarea REST, retry-ul și răspunsul gol.
 
-## Запуск
+Setează `VITE_API_URL` pentru host-ul serviciului. Implicit, aplicația încearcă `http://127.0.0.1:8000/parcels`.
+
+## Rulare și verificare
 
 ```bash
-npm install
+npm ci
 npm run dev
-npm test
+npm test -- --run
 npm run build
 ```
 
-Связанные проекты: [Python geospatial tools](https://github.com/luciandanileico94-dev/farm-registry-python-tools) · [React Native field app](https://github.com/luciandanileico94-dev/farm-registry-mobile).
+CI rulează `npm ci`, testele și build-ul la push și pull request.
 
-> Demo data is synthetic. No personal, cadastral or government data is included.
+## Limitări
+
+Proiectul nu include backend, autentificare, persistență, date cadastrale, integrare WMS sau date guvernamentale. Tile-urile hărții provin de la OpenStreetMap în browser; disponibilitatea lor depinde de serviciul extern. Endpoint-ul REST trebuie furnizat separat.
+
+Îmbunătățirile curente sunt post-submission. Tag-ul `submission-21663739-2026-08-12` păstrează starea trimisă inițial; istoricul nu este rescris.
