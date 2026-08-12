@@ -6,7 +6,7 @@ Portfolio-demo для закупки MAIA **Servicii Front End & Python Develope
 
 - React + TypeScript + responsive UI на румынском языке;
 - интерактивная карта на Leaflet с GeoJSON-полигонами и выбором parcel;
-- state management через React Query и локальный UI state;
+- state management через реальный `useQuery`/React Query и локальный UI state;
 - поиск, статусы валидации и доступный keyboard-friendly UI;
 - тест, CI и production build.
 
@@ -16,7 +16,8 @@ Portfolio-demo для закупки MAIA **Servicii Front End & Python Develope
 |---|---|
 | React / TypeScript | `src/App.tsx`, `src/main.tsx` |
 | GIS / GeoJSON / Leaflet | `MapContainer`, `GeoJSON` в `src/App.tsx` |
-| REST-ready data layer | dependency `axios`, QueryClient boundary |
+| REST API integration | `src/api.ts` → `GET /parcels`, fallback на synthetic fixtures |
+| State management | `useQuery({queryKey:['parcels']})` в `src/App.tsx` |
 | Tests / CI | `src/test/App.test.tsx`, `.github/workflows/ci.yml` |
 | Git workflow | feature branches, pull requests и review-ready commits |
 
