@@ -1,37 +1,38 @@
 # Arhitectură bazată pe dovezi
 
-Acest document descrie numai comportamentul verificabil în codul clientului web. Implementarea curentă concentrează orchestrarea, harta, conversia GeoJSON și starea locală în [`src/App.tsx`](../src/App.tsx); nu există module separate `src/map/ParcelMap.tsx`, `src/domain/geo.ts` sau `src/store.ts` în versiunea documentată.
+Acest document descrie comportamentul verificabil al clientului web actual. Interfața este Romanian-first: etichetele și fluxurile vizibile utilizatorului sunt în română. În acest commit, starea, conversia GeoJSON și componenta hărții sunt implementate în [`src/App.tsx`](../src/App.tsx), nu în module separate `src/store.ts`, `src/domain/geo.ts` sau `src/map/ParcelMap.tsx`.
 
 ## Flux la rulare
 
 ```mermaid
 flowchart LR
-    U[Utilizator] --> A[App]
-    A --> S[Stare React locală]
+    U[Utilizator] --> A[App: dashboard, filtre, selecție, tab-uri]
     A -->|demo| F[fixtures sintetice]
-    S -->|demo| L[localStorage]
-    A -->|API mode| C[loadParcels]
-    C -->|GET /parcels| R[API configurat prin VITE_API_URL]
-    F --> M[MapView]
-    R --> M
-    M --> G[React Leaflet / Leaflet<br/>OSM tiles + GeoJSON]
-    A -->|sarcini și observații| S
-    S --> H[activity / audit local]
+    F --> L[stare locală în App]
+    L -->|doar demo| LS[localStorage]
+    A -->|API mode| P[loadParcels]
+    P -->|GET /parcels| API[API configurat cu VITE_API_URL]
+    F --> G[MapView în App]
+    API --> G
+    G --> J[GeoJSON FeatureCollection]
+    J --> M[React Leaflet: MapContainer, GeoJSON, TileLayer]
+    M --> O[OpenStreetMap tiles]
+    A -->|sarcini, observații, audit| L
 ```
 
-[`App`](../src/App.tsx) coordonează dashboard-ul, filtrele, selecția câmpului, tab-urile și acțiunile locale. `dataMode` alege între două surse:
+[`App`](../src/App.tsx) orchestrează dashboard-ul, căutarea și filtrele, selecția câmpului, tab-urile și acțiunile locale. `dataMode` alege sursa de date:
 
-- în modul `demo`, `readDemoWorkspace` citește cheia `farm-registry-demo-workspace-v1` din `localStorage` sau clonează [`demoWorkspace`](../src/fixtures.ts); modificările stării sunt apoi serializate în aceeași cheie;
-- în modul `api`, TanStack Query apelează `loadParcels`, iar clientul din [`src/api.ts`](../src/api.ts) execută `GET /parcels` la baza definită prin `VITE_API_URL`. Configurația deployment-ului Render este documentată în [`README.md`](../README.md). Erorile și răspunsurile goale nu fac fallback la fixtures.
+- în modul `demo`, `readDemoWorkspace` citește cheia `farm-registry-demo-workspace-v1` din `localStorage` sau obține o clonă a [`demoWorkspace`](../src/fixtures.ts);
+- în modul `api`, TanStack Query apelează `loadParcels`, iar [`src/api.ts`](../src/api.ts) trimite `GET /parcels` la baza definită prin `VITE_API_URL`.
 
-`MapView` compune `MapContainer`, `TileLayer` și `GeoJSON` din React Leaflet. URL-ul tile-urilor OpenStreetMap este configurat direct în componentă. `toFeatureCollection` transformă geometriile Polygon ale câmpurilor într-un `FeatureCollection`, iar `fieldToGeoJSON` pregătește exportul unui câmp.
+În API mode, erorile și răspunsurile fără câmpuri sunt afișate fără fallback automat la fixtures. `MapView` din `App.tsx` compune `MapContainer`, `TileLayer` și `GeoJSON`; `toFeatureCollection` construiește un GeoJSON `FeatureCollection`, iar `fieldToGeoJSON` pregătește exportul unui câmp. URL-ul tile-urilor OpenStreetMap este definit în componentă.
 
-## Limita scrierilor și a sincronizării
+## Granița mutațiilor locale
 
-`createTask`, `completeTask`, `addObservation` și `reviewObservation` modifică exclusiv starea React și adaugă intrări prin `addAudit`. În modul demo, efectul de persistență copiază această stare în `localStorage`. În modul API, persistența în `localStorage` este dezactivată, deci schimbările rămân doar în memoria clientului pentru sesiunea curentă.
+`createTask`, `completeTask`, `addObservation` și `reviewObservation` actualizează `localWorkspace` și adaugă activitate prin `addAudit`. Efectul de persistență scrie în `localStorage` numai în modul `demo`. În API mode, aceeași stare locală există doar în memoria clientului pe durata sesiunii.
 
-Clientul web nu apelează endpoint-uri backend de scriere pentru aceste acțiuni și nu implementează sincronizare între clienți. Funcțiile de citire pentru ferme, câmpuri, sarcini și observații există în `src/api.ts`, dar fluxul runtime al aplicației conectează numai `loadParcels` / `GET /parcels`.
+Clientul API definește citiri pentru ferme, câmpuri, sarcini și observații, iar `loadFields` redirecționează compatibil la `loadParcels`. Fluxul runtime din `App` conectează numai `loadParcels` / `GET /parcels`; [`src/api.ts`](../src/api.ts) nu conține apeluri HTTP de scriere. Prin urmare, sarcinile și observațiile nu reprezintă scrieri backend sau sincronizare între clienți.
 
-## Limita datelor
+## Date sintetice și limite
 
-[`src/fixtures.ts`](../src/fixtures.ts) definește ferme, câmpuri, sarcini, observații și activitate fictive, cu identificatori `SYN-*`. Geometriile și coordonatele sunt sintetice. Codul nu susține afirmații despre date GPS sau cadastrale reale, persoane reale, bază de date persistentă ori pregătire pentru producție.
+[`src/fixtures.ts`](../src/fixtures.ts) furnizează ferme, câmpuri, sarcini, observații și activitate de demonstrație cu identificatori `SYN-*`. Geometriile sunt Polygon sintetice. Codul nu demonstrează date reale despre fermieri, GPS sau cadastru, o bază de date persistentă de producție ori pregătire pentru producție.

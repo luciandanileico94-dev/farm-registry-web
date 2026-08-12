@@ -62,8 +62,7 @@ Toate fermele, persoanele, sarcinile, observațiile, coordonatele și geometriil
 
 ## Evidence
 
-- [Arhitectură bazată pe dovezi](docs/architecture.md)
-- [Matrice de dovezi și comenzi de verificare](docs/evidence-matrix.md)
+Vezi [arhitectura bazată pe dovezi](docs/architecture.md) și [matricea de dovezi](docs/evidence-matrix.md).
 
 ## Proiecte asociate
 
