@@ -1,93 +1,46 @@
 # Farm Registry Web
 
-**Operational workspace for reviewing farms, fields, tasks, observations, and parcel geometry.**
+Spațiu de lucru web, în limba română, pentru explorarea unui registru agricol sintetic. Este un demo de portofoliu: nu este prezentat ca produs pregătit pentru producție.
 
-[Open the live demo](https://farm-registry-web.vercel.app)
+[Deschide demo-ul live](https://farm-registry-web.vercel.app) · [Documentația API](https://farm-registry-api-demo.onrender.com/docs)
 
-Un workspace web în limba română pentru explorarea unui registru agricol demonstrativ: operatorii pot filtra câmpuri, inspecta contururi și gestiona local fluxuri de verificare. The application is a portfolio demo built around deterministic synthetic data, with an explicit client boundary for a compatible parcel API.
+## Ce include
 
-> **Demo boundary:** the default and publicly hosted experience contains synthetic fixtures only. It does not contain secrets, private GPS traces, cadastral records, government datasets, or real client/farmer data.
+- Dashboard cu indicatori pentru ferme, câmpuri, verificări, sarcini, observații, suprafață și câmpuri validate.
+- Căutare și filtre combinate după fermă, cultură și status pentru ferme/câmpuri.
+- Hartă [Leaflet](https://leafletjs.com/) cu contururi GeoJSON selectabile.
+- Fișă de câmp cu taburi: **Privire generală**, **Ciclu cultură**, **Sarcini**, **Observații** și **Istoric audit**.
+- Fluxuri locale pentru crearea/finalizarea sarcinilor și adăugarea, aprobarea sau trimiterea la revizie a observațiilor.
+- Export GeoJSON pentru câmpul selectat și resetarea modificărilor demo locale.
 
-## Product workflows
+Demo-ul implicit conține 6 ferme fictive și 12 câmpuri. Modificările făcute în acest mod sunt păstrate numai local în browser și pot fi resetate.
 
-| Area | What is implemented |
-| --- | --- |
-| Dashboard | KPIs for tracked farms, registered fields, fields requiring review, open tasks, pending observations, total area, and validated fields. |
-| Farm and field discovery | Free-text search across IDs, farmers, crops, farm names, and field names; combinable farm, crop, and validation-status filters. |
-| Field workspace | Select a field from the registry or its polygon, then move through **Overview**, **Crop cycle**, **Tasks**, **Observations**, and **Audit history** tabs. |
-| Tasks | Create a synthetic field task and mark an open task as completed. Demo mutations stay in the browser. |
-| Observations | Add a categorized synthetic note, approve it, or send it for review. Each local action also adds an audit entry. |
-| Audit | Read the selected field's chronological activity records, including locally generated task and observation events. |
-| GeoJSON export | Download the selected field as a GeoJSON `Feature` with its polygon and operational properties. |
-| Local reset | Clear browser changes and restore the deterministic demo workspace to its initial fixtures. |
-
-The demo starts with 6 fictional farms and 12 closed GeoJSON `Polygon` fields. Demo state is persisted under a versioned `localStorage` key; if browser storage is unavailable, the fixture remains usable for the current session.
-
-## Map and GeoJSON scope
-
-The map uses Leaflet through React Leaflet to render and select the GeoJSON polygon layer. Geometry is transformed into a `FeatureCollection`, styled by field status, and recreated when field geometry changes. Export is generated entirely in the browser for the currently selected field.
-
-The current implementation does **not** configure a Leaflet `TileLayer`. Consequently, no street/satellite basemap, government layer, cadastral overlay, or other public-data layer is bundled or fetched. The map is intentionally limited to the synthetic GeoJSON contours on Leaflet's map canvas.
-
-## Data modes
-
-### Synthetic demo (default)
-
-No environment configuration is required. Farms, fields, tasks, observations, and audit records come from [`src/fixtures.ts`](src/fixtures.ts). All fixture identifiers use the `SYN-` prefix, and local UI mutations are stored only in the visitor's browser.
-
-### API boundary (optional)
-
-```bash
-VITE_FARM_REGISTRY_MODE=api \
-VITE_API_URL=http://127.0.0.1:8000 \
-npm run dev
-```
-
-[`src/api.ts`](src/api.ts) defines client functions for farms, fields, tasks, and observations. The application currently reads fields through `GET /parcels`, matching the existing Python parcel contract. API loading, empty, and error states are explicit; an API failure never silently falls back to demo fixtures.
-
-Only parcel reads are connected to the current React workspace. Tasks, observations, and their audit events created from the UI remain local; there are no backend mutations or claimed cross-client synchronization.
-
-## Architecture and related projects
-
-| Component | Responsibility and current relationship |
-| --- | --- |
-| **farm-registry-web** | This repository: a Vite-built React client, static demo fixtures, browser-local workflow state, and an Axios/React Query API boundary. |
-| [**farm-registry-mobile**](https://github.com/luciandanileico94-dev/farm-registry-mobile) | Separate mobile client for field-oriented observation capture. It is a related product surface, not a module bundled into this web app, and direct synchronization is not implemented here. |
-| [**farm-registry-python-tools**](https://github.com/luciandanileico94-dev/farm-registry-python-tools) | Separate Python API/geospatial tooling. Its `/parcels` response is the compatibility target for the web client's API mode. |
-
-The live Vercel URL serves the static web application and synthetic demo. An API integration boundary exists, but no Render blueprint or Render service is deployed from this repository; there is no live Render API to claim. A real API-mode deployment would require a separately hosted, CORS-enabled backend plus `VITE_FARM_REGISTRY_MODE` and `VITE_API_URL` configured at build time.
-
-## Stack
-
-- React 18 and React DOM
-- TypeScript 5.6
-- Vite 5
-- TanStack React Query 5 and Axios
-- Leaflet 1.9 and React Leaflet 4
-- CSS responsive layout
-- Vitest, jsdom, Testing Library, and jest-dom
-
-## Run locally
+## Rulare locală
 
 ```bash
 npm install
 npm run dev
 ```
 
-Vite prints the local development URL. The default mode is the self-contained synthetic demo.
+Stack: React, TypeScript, Vite, TanStack React Query, Axios, Leaflet și React Leaflet.
 
-## Verification
+## Modul API
 
-The repository exposes these checks through `package.json` scripts:
+Pentru a porni clientul în modul Web API de producție, configurați:
 
 ```bash
-npm run lint
-npm test
-npm run build
+VITE_FARM_REGISTRY_MODE=api \
+VITE_API_URL=https://farm-registry-api-demo.onrender.com \
+npm run dev
 ```
 
-- `npm run lint` performs the TypeScript no-emit check.
-- `npm test` runs the Vitest suite once.
-- `npm run build` runs the TypeScript project build and produces the Vite production bundle.
+Calea de citire API este conectată la serviciul Render prin `GET /parcels`. Mutațiile pentru sarcini și observații, precum și persistența lor, nu sunt de nivel producție: ele rămân fluxuri locale în acest client și nu reprezintă integrare sau sincronizare reală.
 
-Tests cover fixture/geometry invariants, search and combined filters, field selection, task completion, observation approval, API loading/empty/error isolation, and browser-side GeoJSON export.
+## Limită de date
+
+Aplicația folosește exclusiv date sintetice. Nu conține ferme reale, date cadastrale, trasee GPS, date private sau personale și nici secrete. Contururile GeoJSON și toate identitățile din demo sunt fictive.
+
+## Proiecte conexe
+
+- [farm-registry-mobile](https://github.com/luciandanileico94-dev/farm-registry-mobile)
+- [farm-registry-python-tools](https://github.com/luciandanileico94-dev/farm-registry-python-tools)
