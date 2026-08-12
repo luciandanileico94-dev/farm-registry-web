@@ -1,0 +1,2 @@
+import {render,screen} from '@testing-library/react'; import {describe,it,expect} from 'vitest'; import App from '../App';
+describe('registry dashboard',()=>{it('renders core registry content',()=>{render(<App/>);expect(screen.getByText('Registrul Fermierului')).toBeInTheDocument();expect(screen.getByText('AgroNord SRL')).toBeInTheDocument();expect(screen.getByLabelText('Search parcels')).toBeInTheDocument()})});
