@@ -49,6 +49,13 @@ VITE_DATA_MODE=demo npm run build
 
 Demo-ul nu simulează un backend și nu folosește date reale. Workflow-ul `.github/workflows/pages.yml` construiește cu `VITE_DATA_MODE=demo` și `VITE_BASE_PATH=/<numele-repository-ului>/`, apoi publică `dist` în GitHub Pages.
 
+## Capturi reale ale demo-ului
+
+Capturile de mai jos provin din rularea verificată a aplicației cu `VITE_DATA_MODE=demo`; ele nu reprezintă un URL live.
+
+[![Dashboard desktop](docs/screenshots/dashboard-desktop.png)](docs/screenshots/dashboard-desktop.png)
+[![Dashboard mobile](docs/screenshots/dashboard-mobile.png)](docs/screenshots/dashboard-mobile.png)
+
 ## tests/live URL/limitations/post-submission tag
 
 Verificare locală:
